@@ -1,0 +1,13 @@
+/* In this query we want verify if the most recurrent 
+skills are also associated with the highest salary*/
+
+SELECT
+skills_dim.skills AS skill_name,
+ROUND(AVG(job_postings_fact_staging.salary_year_avg),0) AS salary
+FROM job_postings_fact_staging
+INNER JOIN skills_job_dim ON skills_job_dim.job_id = job_postings_fact_staging.job_id
+INNER JOIN skills_dim ON skills_dim.skill_id = skills_job_dim.skill_id
+WHERE job_postings_fact_staging.job_title_short = 'Data Analyst' AND job_postings_fact_staging.job_location IN ('Anywhere') AND job_postings_fact_staging.salary_year_avg IS NOT NULL AND job_postings_fact_staging.job_work_from_home = TRUE
+GROUP BY skills_dim.skills
+ORDER BY salary DESC
+LIMIT 25

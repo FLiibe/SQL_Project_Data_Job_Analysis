@@ -1,0 +1,14 @@
+/* Following the 2_query, here the main goal is understand if there 
+are some skills recurrent in thejob posting to 
+better understand what are the most demanded skill*/
+
+SELECT
+skills_dim.skills AS skill_name,
+COUNT(skills_dim.skills)
+FROM job_postings_fact_staging
+INNER JOIN skills_job_dim ON skills_job_dim.job_id = job_postings_fact_staging.job_id
+INNER JOIN skills_dim ON skills_dim.skill_id = skills_job_dim.skill_id
+WHERE job_postings_fact_staging.job_title_short = 'Data Analyst' AND job_postings_fact_staging.job_location IN ('Anywhere') AND job_postings_fact_staging.salary_year_avg IS NOT NULL AND job_postings_fact_staging.job_work_from_home = TRUE
+GROUP BY skill_name
+ORDER BY COUNT(skills_dim.skills) DESC
+LIMIT 10
