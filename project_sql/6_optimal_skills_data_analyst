@@ -1,0 +1,17 @@
+/*Lastly, in this query we aim to filter the results 
+of 5_query to only consider job posting with high 
+salary whose job offer requires the most recurrent skills*/
+
+SELECT
+job_postings_fact.job_id AS id,
+skills_job_dim.skill_id AS skill_identification,
+company_dim.name AS company_name,
+skills_dim.skills AS skill_name,
+job_postings_fact.salary_year_avg AS yearly_salary
+FROM job_postings_fact
+LEFT JOIN company_dim ON job_postings_fact.company_id = company_dim.company_id
+INNER JOIN skills_job_dim ON skills_job_dim.job_id = job_postings_fact.job_id
+INNER JOIN skills_dim ON skills_dim.skill_id = skills_job_dim.skill_id
+WHERE job_postings_fact.job_title_short = 'Data Analyst' AND job_postings_fact.job_location IN ('Anywhere') AND job_postings_fact.salary_year_avg IS NOT NULL AND job_work_from_home = TRUE AND skills_dim.skills IN ('sql','excel','python','tableu','r','power bi')
+GROUP BY yearly_salary, company_name, id, skill_name, skill_identification
+ORDER BY yearly_salary DESC

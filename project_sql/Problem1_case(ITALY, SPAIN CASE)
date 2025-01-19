@@ -1,0 +1,20 @@
+SELECT
+MIN(salary_year_avg),
+MAX(salary_year_avg)
+FROM job_postings_fact
+
+
+SELECT
+job_title_short AS title,
+company_dim.name,
+job_location AS location,
+    CASE
+        WHEN salary_year_avg <= '300000' THEN  'low salary'
+        WHEN salary_year_avg > '600000' THEN 'high salary'
+        ELSE 'medium salary'
+    END AS salary_categories
+FROM job_postings_fact
+    LEFT JOIN company_dim
+    ON job_postings_fact.company_id = company_dim.company_id
+WHERE job_title_short = 'Data Analyst' AND company_dim.name <> 'Confidenziale' AND (job_location = 'Italy' OR job_work_from_home)
+

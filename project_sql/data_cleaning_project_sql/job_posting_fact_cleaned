@@ -1,0 +1,97 @@
+-- 1. remove duplicates
+-- 2. standardize data
+-- 3. null values or blank values
+-- 4. remove columns and rows
+
+-- Let's create a new table (duplicate of our dataset)
+
+CREATE TABLE job_postings_fact_staging
+AS
+TABLE job_postings_fact;
+
+-- Now let's proceed to verify if we have duplicate with this query
+
+SELECT job_id, COUNT(*)
+FROM job_postings_fact_staging
+GROUP BY job_id
+HAVING COUNT(*) > 1
+ORDER BY job_id;
+
+-- Looks like we don't have duplicates
+
+-- Let's standardize checking every columns
+SELECT job_title_short, TRIM(job_title_short)
+FROM job_postings_fact_staging
+WHERE job_title_short <> TRIM(job_title_short);
+
+SELECT job_title, TRIM(job_title)
+FROM job_postings_fact_staging
+WHERE job_title <> TRIM(job_title)
+ORDER by job_title;
+
+-- Seem we have some rows to trim, let'so do it
+
+UPDATE job_postings_fact_staging
+SET job_title = TRIM(job_title);
+
+-- Done, let's move on with the following columns
+
+SELECT job_location, TRIM(job_location)
+FROM job_postings_fact_staging
+WHERE job_location <> TRIM(job_location);
+
+-- Here is all good, let's continue and eliminate 'via' from job_via column
+
+UPDATE job_postings_fact_staging
+SET job_via = REPLACE(job_via, 'via','')
+WHERE job_via LIKE 'via%';
+
+--Npw let's group job type. for example 'contractor%' in 'contractor' and then trim
+
+UPDATE job_postings_fact_staging
+SET job_schedule_type = 
+CASE
+    WHEN job_schedule_type LIKE '%and%'THEN split_part(job_schedule_type,'and', 1)
+    WHEN job_schedule_type LIKE '%,%' THEN split_part(job_schedule_type,',', 1)
+    ELSE job_schedule_type
+END
+
+UPDATE job_postings_fact_staging
+SET job_schedule_type = TRIM(job_schedule_type)
+
+SELECT DISTINCT job_schedule_type
+FROM job_postings_fact_staging
+
+--Now we have grouped snd modified the column
+
+UPDATE job_postings_fact_staging
+SET job_posted_date= job_posted_date::DATE
+
+ALTER TABLE job_postings_fact_staging
+ALTER COLUMN job_posted_date TYPE DATE USING job_posted_date::DATE
+
+-- Above we changed the date from timestamp to date as we don't really need the time
+
+DELETE FROM job_postings_fact_staging
+WHERE salary_rate IS NULL
+
+-- We have just deleted column with no salary as they give no usefull information
+
+ALTER TABLE job_postings_fact_staging
+ADD COLUMN salary_year_adjusted NUMERIC
+
+--- We insert a column to proportionate the rows with the hour salary with the the rows with year salary
+
+UPDATE job_postings_fact_staging
+SET salary_year_adjusted = ROUND(
+    CASE
+        WHEN salary_year_avg IS NULL THEN salary_hour_avg*2080
+        ELSE salary_year_avg
+    END)
+
+-- We put the data doing th calculation above
+
+SELECT *
+FROM job_postings_fact_staging
+
+-- And the cleaning is complete!!!

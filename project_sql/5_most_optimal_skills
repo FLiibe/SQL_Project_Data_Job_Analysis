@@ -1,0 +1,17 @@
+/* As the results of 4_query here the goal is to 
+tackle an analysis to find what are the optimal 
+skills (high salary and high recurrency).*/
+
+SELECT
+skills_dim.skills AS skill_name,
+COUNT(skills_dim.skills) AS skills_count,
+ROUND(AVG(job_postings_fact.salary_year_avg),0) AS salary
+FROM job_postings_fact
+INNER JOIN skills_job_dim ON skills_job_dim.job_id = job_postings_fact.job_id
+INNER JOIN skills_dim ON skills_dim.skill_id = skills_job_dim.skill_id
+WHERE job_postings_fact.job_title_short = 'Data Analyst' AND job_postings_fact.job_location IN ('Anywhere') AND job_postings_fact.salary_year_avg IS NOT NULL AND job_work_from_home = TRUE
+GROUP BY skills_dim.skills
+ORDER BY skills_count DESC, salary DESC
+LIMIT 25
+
+
